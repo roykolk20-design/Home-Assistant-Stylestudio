@@ -5,14 +5,20 @@
 [![HACS Custom](https://img.shields.io/badge/HACS-Custom-41BDF5.svg)](https://hacs.xyz/docs/faq/custom_repositories)
 ![Version](https://img.shields.io/badge/version-0.9.0-F59E0B)
 ![Home Assistant](https://img.shields.io/badge/Home%20Assistant-2026.10%2B-18BCF2)
+
+## ☕ Support my work
+
+Style Studio is free and open source, made in my spare time. If it makes your Home Assistant nicer to use, a coffee helps me keep building.
+
 [![Support me on Ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/kolkiesdesign)
+
 
 Set the look of your whole Home Assistant from one panel: colors, icons,
 backgrounds, room tiles and pop-ups, per person. Pick a few things, see the
 result right away, and save. No YAML, no CSS.
 
 Style Studio is the app. Its add-on
-[Glass Sidebar](https://github.com/roykolk20-design/Home-assistant-glasssidebar)
+[Glass Sidebar](https://github.com/roykolk20-design/Home-Assistant-Glasssidebar)
 turns the sidebar into a floating glass panel. Together they make the whole;
 each lives in its own repository and installs on its own.
 
@@ -104,7 +110,7 @@ each lives in its own repository and installs on its own.
 - For rooms and climate pop-ups: [button-card](https://github.com/custom-cards/button-card)
   and [Bubble Card](https://github.com/Clooos/Bubble-Card), both from HACS.
   Without them the themes, backgrounds, per person and check tabs still work.
-- Optional: the [Glass Sidebar](https://github.com/roykolk20-design/Home-assistant-glasssidebar)
+- Optional: the [Glass Sidebar](https://github.com/roykolk20-design/Home-Assistant-Glasssidebar)
   add-on for the floating glass sidebar.
 
 ## Installation
