@@ -25,8 +25,8 @@ each lives in its own repository and installs on its own.
 ![Theme editor](images/themes.png)
 
 > The images on this page come from a test page that mimics Home Assistant.
-> Your own panels, names and dashboards will differ. The panel is in Dutch,
-> with English for everyone whose Home Assistant is set to another language.
+> Your own panels, names and dashboards will differ. The panel follows the
+> language of your Home Assistant: Dutch for Dutch, English for every other language.
 
 ## Features
 

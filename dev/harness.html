@@ -66,6 +66,8 @@
     config: { url_path: "config", title: "config", icon: "mdi:cog" },
   };
   const lang = params.get("lang") === "en" ? "en" : "nl";
+  const WARM = lang === "en" ? "Light Warm" : "Licht Warm";
+  const PINK = lang === "en" ? "Light Pink" : "Licht Roze";
   const labels = lang === "en"
     ? { "panel.states": "Overview", "panel.energy": "Energy", "panel.map": "Map",
         "panel.logbook": "Logbook", "panel.history": "History", "panel.config": "Settings" }
@@ -92,12 +94,12 @@
 
   // Themes: the user's own two files, and what Style Studio made.
   const others = {
-    "Licht Warm": {
+    [WARM]: {
       "primary-background-color": "#f4efe6", "card-background-color": "#fffaf2",
       "primary-text-color": "#3b3127", "primary-color": "#f59e0b",
       "sidebar-background-color": "#fbf6ec", "bubble-pop-up-main-background-color": "#fffaf2",
     },
-    "Licht Roze": {
+    [PINK]: {
       "primary-background-color": "#fbf1f4", "card-background-color": "#fffafc",
       "primary-text-color": "#3d2b33", "primary-color": "#e8749e",
     },
@@ -126,7 +128,7 @@
   const reports = {
     joyce: {
       device: "joyce00001", user_id: "3a122b8e", at: new Date(Date.now() - 3600e3).toISOString(),
-      version: "0.1.0", app: true, theme: "Licht Roze",
+      version: "0.1.0", app: true, theme: PINK,
       sidebar: { panelOrder: ["lovelace", "map"], hiddenPanels: ["logbook", "history"] },
     },
   };
@@ -223,6 +225,26 @@
     },
     "dashboard-plattegrond": { views: [{ title: "Plattegrond", type: "panel", cards: [{ type: "picture-elements" }] }] },
   };
+  // In English the demo data is English too (room names, lights, dashboards).
+  if (lang === "en") {
+    const words = [
+      ["Plattegrond", "Floor plan"], ["Stijl", "Style"], ["Woonkamer", "Living room"],
+      ["Slaapkamerlamp", "Bedroom light"], ["Slaapkamer", "Bedroom"], ["Keukenlamp", "Kitchen light"],
+      ["Keuken", "Kitchen"], ["Plafondlamp", "Ceiling light"], ["Plafond", "Ceiling"],
+      ["Staande lamp", "Floor lamp"], ["Staand", "Floor lamp"], ["Zolderlamp", "Attic light"],
+      ["Zolder", "Attic"], ["Avond", "Evening"], ["Ochtend", "Morning"], ["Thuis", "Home"],
+      ["Begane grond", "Ground floor"], ["1e verdieping", "First floor"], ["Licht", "Light"],
+      ["Energie", "Energy"], ["Batterij", "Battery"], ["Stroom", "Power"],
+    ];
+    const english = (value) => {
+      if (typeof value === "string") return words.reduce((text, [nl, en]) => text.split(nl).join(en), value);
+      if (value && typeof value === "object") {
+        for (const key of Object.keys(value)) value[key] = english(value[key]);
+      }
+      return value;
+    };
+    for (const data of [states, floors, areas, dashboards, panels]) english(data);
+  }
   const backups = [];
   window.__lovelace = () => ({ dashboards, backups });
 
@@ -252,7 +274,7 @@
     areas,
     floors,
     user: users[0],
-    selectedTheme: { theme: "Licht Warm" },
+    selectedTheme: { theme: WARM },
     language: lang,
     locale: { language: lang },
     panels,
@@ -295,7 +317,7 @@
             glass_sidebar: true,
             glass_handles_themes: false,
             card_mod_themes: [
-              { theme: "Licht Warm", keys: ["card-mod-sidebar", "card-mod-theme"], sidebar: true, in_use: true },
+              { theme: WARM, keys: ["card-mod-sidebar", "card-mod-theme"], sidebar: true, in_use: true },
               { theme: "Frosted Glass", keys: ["card-mod-root", "card-mod-sidebar"], sidebar: true, in_use: false },
             ],
             // This version started just now; Joyce's phone was seen before.
@@ -463,7 +485,7 @@
       ${order.map((path) => `
         <ha-list-item-button id="sidebar-panel-${path}" class="${path === "style-studio" ? "selected" : ""}">
           <ha-icon slot="start" icon="${panels[path].icon ?? "mdi:view-dashboard"}"></ha-icon>
-          <span class="item-text">${labels[`panel.${panels[path].title}`] ?? panels[path].title ?? "Overzicht"}</span>
+          <span class="item-text">${labels[`panel.${panels[path].title ?? "states"}`] ?? panels[path].title}</span>
         </ha-list-item-button>`).join("")}
     </slot></ha-list-nav>`;
 
