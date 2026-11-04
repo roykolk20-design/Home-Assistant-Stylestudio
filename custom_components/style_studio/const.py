@@ -1,6 +1,6 @@
 DOMAIN = "style_studio"
 # Keep in sync with manifest.json, frontend/src/version.js and www/person.js.
-VERSION = "0.8.0"
+VERSION = "0.9.0"
 
 URL_BASE = f"/{DOMAIN}"
 # The version in the URL makes browsers and the Companion app fetch new files.

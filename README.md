@@ -3,8 +3,9 @@
 # Style Studio for Home Assistant
 
 [![HACS Custom](https://img.shields.io/badge/HACS-Custom-41BDF5.svg)](https://hacs.xyz/docs/faq/custom_repositories)
-![Version](https://img.shields.io/badge/version-0.8.0-F59E0B)
+![Version](https://img.shields.io/badge/version-0.9.0-F59E0B)
 ![Home Assistant](https://img.shields.io/badge/Home%20Assistant-2026.10%2B-18BCF2)
+[![Support me on Ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/kolkiesdesign)
 
 Set the look of your whole Home Assistant from one panel: colors, icons,
 backgrounds, room tiles and pop-ups, per person. Pick a few things, see the
@@ -129,13 +130,13 @@ The panel warns when a saved theme isn't loaded.
 
 ### HACS
 
-[![Open your Home Assistant instance and open this repository in HACS.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=roykolk20-design&repository=style-studio&category=integration)
+[![Open your Home Assistant instance and open this repository in HACS.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=roykolk20-design&repository=Home-Assistant-Stylestudio&category=integration)
 
 Click the button above, or add it by hand:
 
 1. In Home Assistant, open **HACS**.
 2. Open the menu (⋮) in the top right and choose **Custom repositories**.
-3. Add `https://github.com/roykolk20-design/style-studio` with type
+3. Add `https://github.com/roykolk20-design/Home-Assistant-Stylestudio` with type
    **Integration**.
 4. Search for **Style Studio** in HACS and download it.
 5. Restart Home Assistant.
@@ -396,12 +397,6 @@ as the argument to keep pictures of what the browser saw.
 
 To release: raise the version in the four places `npm run check` names, update
 `CHANGELOG.md`, build, and push a tag `vX.Y.Z`.
-
-## Support
-
-Style Studio is free and open source. If it makes your Home Assistant nicer to use, you can buy me a coffee.
-
-[![Support me on Ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/kolkiesdesign)
 
 ## License
 

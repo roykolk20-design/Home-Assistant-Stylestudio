@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.9.0]
+
+### Changed
+
+- **Nothing changes on a screen that is open.** Per-person themes and sidebars
+  are applied when a page opens, no longer pushed live to other people's
+  browsers.
+- Browsers report to Style Studio at most every six hours, and only when
+  something changed.
+- Uploaded background photos get an unguessable file name.
+- The sidebar title and the repair notification follow the Home Assistant
+  language; a check keeps the Dutch and English texts in step.
+- The repository is now called `Home-Assistant-Stylestudio`; the old address
+  redirects.
+
+
 ## [0.8.0]
 
 ### New

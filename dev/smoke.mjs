@@ -288,7 +288,7 @@ for (const width of [430, 1920]) {
 }
 
 // Per person: Roy (logged in here) gets Joyce's sidebar and the pink theme;
-// the runtime in this browser applies both.
+// the script in this browser applies both when a page opens, not before.
 {
   const { ctx, tab, panel, errors } = await open(1920, "", "Per persoon");
   const people = panel.locator("ss-people-tab");
@@ -300,9 +300,22 @@ for (const width of [430, 1920]) {
   await people.getByRole("combobox", { name: /Zijbalk.*\(Roy\)/ }).selectOption({ label: "Zoals Joyce nu" });
   await people.getByRole("button", { name: "Opslaan" }).click();
   await tab.waitForTimeout(2500);
-  const result = await tab.evaluate(() => window.__people());
+  let result = await tab.evaluate(() => window.__people());
   check(result.persons["8faf3d60"]?.theme === "Licht Roze", "theme saved for Roy");
-  check(result.appliedTheme === "Licht Roze", `runtime applied theme (${result.appliedTheme})`);
+  // Nothing changes on a screen that is open: it is applied when a page opens.
+  check(result.appliedTheme === undefined, `saving changes nothing on an open page (${result.appliedTheme})`);
+  check(
+    JSON.stringify(result.userSidebar) === JSON.stringify({ panelOrder: ["lovelace", "energy"], hiddenPanels: [] }),
+    "the sidebar order of an open page is untouched too"
+  );
+  // A page opens: the script runs again (as on a new page load).
+  await tab.evaluate(async () => {
+    delete window.__styleStudio;
+    await import("/custom_components/style_studio/www/person.js?opened=1");
+  });
+  await tab.waitForTimeout(2500);
+  result = await tab.evaluate(() => window.__people());
+  check(result.appliedTheme === "Licht Roze", `applied when a page opens (${result.appliedTheme})`);
   check(
     JSON.stringify(result.userSidebar) === JSON.stringify({ panelOrder: ["lovelace", "map"], hiddenPanels: ["logbook", "history"] }),
     `runtime applied sidebar (${JSON.stringify(result.userSidebar)})`
@@ -607,6 +620,60 @@ for (const width of [430, 1920]) {
 
   check(errors.length === 0, `background: no errors ${errors.join(" | ")}`);
   if (shots) await tab.screenshot({ path: `${shots}/background.png` });
+  await ctx.close();
+}
+
+// English: a Home Assistant set to English gets an English panel, everywhere.
+{
+  const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 } });
+  const tab = await ctx.newPage();
+  const errors = [];
+  tab.on("pageerror", (err) => errors.push(err.message));
+  await tab.goto(`${base}?lang=en`);
+  const panel = tab.locator("style-studio-panel");
+  await panel.locator("nav.tabs").waitFor();
+  const names = ["Themes", "Sidebar", "Rooms and pop-ups", "Climate", "People", "Check and restore"];
+  const shown = (await panel.locator("nav.tabs button").allInnerTexts()).map((t) => t.trim());
+  check(JSON.stringify(shown) === JSON.stringify(names), `tab names in English (${shown})`);
+
+  // Words from the Dutch interface; demo data (room names) isn't in this list.
+  const dutch = /\b(Opslaan|Volgende|Terug|Annuleren|Wat wil je|Meer opties|Welke|Voorbeeld|Zijbalk|Klimaat|Per persoon|Controle|Thema's|Kamers en|Achtergrond|Foto's|Kleuren|Pagina|Weergave|Toevoegen|Verwijderen|Bezig|Zonder)\b/;
+  const rest = async (label) => {
+    await tab.waitForTimeout(500);
+    const text = (await tab.evaluate(probe)).panelText;
+    const found = text.match(dutch)?.[0];
+    check(!found, `${label}: no Dutch words${found ? ` (found "${found}")` : ""}`);
+    return text;
+  };
+  const go = async (name) => {
+    await panel.locator("nav.tabs").getByRole("button", { name, exact: true }).click();
+    await tab.waitForTimeout(300);
+    const leave = panel.getByRole("button", { name: "Yes" });
+    if (await leave.count()) await leave.click();
+  };
+
+  await go("Themes");
+  check((await rest("themes start")).includes("What do you want to do?"), "English start question");
+  await panel.locator('ss-themes-tab [data-choice="new"]').click();
+  await panel.locator("ss-themes-tab").getByRole("button", { name: "Next" }).click();
+  await rest("themes, colors step");
+  await go("Sidebar");
+  await rest("sidebar");
+  await go("Rooms and pop-ups");
+  await rest("rooms start");
+  for (const choice of ["edit", "add", "card", "background"]) {
+    await panel.locator(`ss-rooms-tab [data-choice="${choice}"]`).click();
+    await rest(`rooms: ${choice}`);
+    await panel.locator("ss-rooms-tab").getByRole("button", { name: "Back", exact: true }).click();
+  }
+  await go("Climate");
+  await rest("climate");
+  await go("People");
+  await rest("people");
+  await go("Check and restore");
+  await rest("check");
+  check(errors.length === 0, `English: no errors ${errors.join(" | ")}`);
+  if (shots) await tab.screenshot({ path: `${shots}/english.png` });
   await ctx.close();
 }
 

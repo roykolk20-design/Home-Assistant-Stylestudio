@@ -15,12 +15,25 @@ from .themes import async_repair_themes
 
 _LOGGER = logging.getLogger(__name__)
 
-REPAIRED = (
-    "Style Studio heeft zijn themabestanden aangepast aan hoe configuration.yaml "
-    "thema's laadt. Het oude bestand hield de interface van Home Assistant tegen. "
-    "Herstart Home Assistant nog één keer. Een kopie staat in "
-    "/config/style_studio/backups/."
-)
+# Shown before the frontend runs, so the language is the server's.
+REPAIRED = {
+    "nl": (
+        "Style Studio heeft zijn themabestanden aangepast aan hoe configuration.yaml "
+        "thema's laadt. Het oude bestand hield de interface van Home Assistant tegen. "
+        "Herstart Home Assistant nog één keer. Een kopie staat in "
+        "/config/style_studio/backups/."
+    ),
+    "en": (
+        "Style Studio changed its theme files to match how configuration.yaml loads "
+        "themes. The old file stopped Home Assistant's interface from starting. "
+        "Restart Home Assistant once more. A copy is in /config/style_studio/backups/."
+    ),
+}
+PANEL_TITLE = {"nl": "Stijl", "en": "Style"}
+
+
+def _language(hass: HomeAssistant) -> str:
+    return "nl" if str(hass.config.language).startswith("nl") else "en"
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
@@ -36,9 +49,12 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     if "frontend" not in hass.config.components:
         if repaired:
             persistent_notification.async_create(
-                hass, REPAIRED, title="Style Studio", notification_id=f"{DOMAIN}_repaired"
+                hass,
+                REPAIRED[_language(hass)],
+                title="Style Studio",
+                notification_id=f"{DOMAIN}_repaired",
             )
-        _LOGGER.warning("The frontend isn't running; the Stijl panel waits for a restart")
+        _LOGGER.warning("The frontend isn't running; the Style Studio panel waits for a restart")
         data["frontend"] = False
         return True
     if repaired:
@@ -63,7 +79,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     frontend.async_register_built_in_panel(
         hass,
         component_name="custom",
-        sidebar_title="Stijl",
+        sidebar_title=PANEL_TITLE[_language(hass)],
         sidebar_icon="mdi:palette-swatch-outline",
         frontend_url_path=PANEL_PATH,
         config={

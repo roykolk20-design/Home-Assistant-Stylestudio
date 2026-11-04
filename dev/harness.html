@@ -65,10 +65,12 @@
     "style-studio": { url_path: "style-studio", title: "Stijl", icon: "mdi:palette-swatch-outline" },
     config: { url_path: "config", title: "config", icon: "mdi:cog" },
   };
-  const labels = {
-    "panel.states": "Overzicht", "panel.energy": "Energie", "panel.map": "Kaart",
-    "panel.logbook": "Logboek", "panel.history": "Geschiedenis", "panel.config": "Instellingen",
-  };
+  const lang = params.get("lang") === "en" ? "en" : "nl";
+  const labels = lang === "en"
+    ? { "panel.states": "Overview", "panel.energy": "Energy", "panel.map": "Map",
+        "panel.logbook": "Logbook", "panel.history": "History", "panel.config": "Settings" }
+    : { "panel.states": "Overzicht", "panel.energy": "Energie", "panel.map": "Kaart",
+        "panel.logbook": "Logboek", "panel.history": "Geschiedenis", "panel.config": "Instellingen" };
 
   // Glass Sidebar's settings as the panel sees them. The fake backend keeps
   // them in that shape; the accent is a hex color, which the runtime takes as is.
@@ -129,9 +131,6 @@
     },
   };
   let userSidebar = { panelOrder: ["lovelace", "energy"], hiddenPanels: [] };
-  const personListeners = [];
-  const pushPerson = () =>
-    personListeners.forEach((cb) => cb({ version: VERSION, ...(persons[users[0].id] ?? {}) }));
   const peopleState = () => ({
     users,
     persons,
@@ -254,8 +253,8 @@
     floors,
     user: users[0],
     selectedTheme: { theme: "Licht Warm" },
-    language: "nl",
-    locale: { language: "nl" },
+    language: lang,
+    locale: { language: lang },
     panels,
     localize: (key) => labels[key] ?? "",
     async callWS(msg) {
@@ -337,14 +336,14 @@
             if (Object.keys(person).length) next[id] = person;
           }
           persons = next;
-          pushPerson();
           return peopleState();
         }
         case "style_studio/people/undo":
           if (!peopleHistory.length) return { restored: false, ...peopleState() };
           persons = peopleHistory.pop();
-          pushPerson();
           return { restored: true, ...peopleState() };
+        case "style_studio/person/get":
+          return { version: VERSION, ...(persons[users[0].id] ?? {}) };
         case "style_studio/person/report":
           reports[msg.device] = {
             device: msg.device, user_id: users[0].id, at: new Date().toISOString(), version: msg.version,
@@ -404,11 +403,6 @@
     },
     connection: {
       subscribeMessage(cb, msg) {
-        if (msg.type === "style_studio/person/subscribe") {
-          personListeners.push(cb);
-          setTimeout(pushPerson);
-          return Promise.resolve(() => {});
-        }
         if (msg.type !== "glass_sidebar/subscribe") return Promise.reject(new Error(msg.type));
         listeners.push(cb);
         setTimeout(push);

@@ -23,16 +23,15 @@ async def _send(client, **msg) -> dict:
     return await client.receive_json()
 
 
-async def test_person_gets_their_settings_live(
+async def test_person_gets_their_settings_when_asking(
     hass, hass_ws_client, hass_admin_user, hass_read_only_user, hass_read_only_access_token
 ) -> None:
     await _setup(hass)
     admin = await hass_ws_client(hass)
     joyce = await hass_ws_client(hass, hass_read_only_access_token)
 
-    # Joyce's browser listens for her own settings.
-    assert (await _send(joyce, type="style_studio/person/subscribe"))["success"]
-    first = (await joyce.receive_json())["event"]
+    # Joyce's browser asks, once, when a page opens.
+    first = (await _send(joyce, type="style_studio/person/get"))["result"]
     assert "theme" not in first
 
     msg = await _send(
@@ -41,11 +40,13 @@ async def test_person_gets_their_settings_live(
         persons={hass_read_only_user.id: {"theme": "Roze", "sidebar": SIDEBAR}},
     )
     assert msg["success"], msg
-    event = (await joyce.receive_json())["event"]
-    assert event["theme"] == "Roze"
-    assert event["sidebar"] == SIDEBAR
-    assert event["theme_updated"] and event["sidebar_updated"]
-    first_time = event["theme_updated"]
+    # Nothing is pushed to her open page. If a message had arrived by itself,
+    # the next answer would be that one and the lookup below would fail.
+    result =(await _send(joyce, type="style_studio/person/get"))["result"]
+    assert result["theme"] == "Roze"
+    assert result["sidebar"] == SIDEBAR
+    assert result["theme_updated"] and result["sidebar_updated"]
+    first_time = result["theme_updated"]
 
     # Saving the same theme again keeps its time, so browsers don't re-apply it.
     msg = await _send(
@@ -53,9 +54,9 @@ async def test_person_gets_their_settings_live(
         type="style_studio/people/save",
         persons={hass_read_only_user.id: {"theme": "Roze", "sidebar": None}},
     )
-    event = (await joyce.receive_json())["event"]
-    assert event["theme_updated"] == first_time
-    assert "sidebar" not in event
+    result = (await _send(joyce, type="style_studio/person/get"))["result"]
+    assert result["theme_updated"] == first_time
+    assert "sidebar" not in result
 
     # Her browser reports back; the admin sees it.
     msg = await _send(
@@ -77,8 +78,16 @@ async def test_person_gets_their_settings_live(
     # Undo puts back the first save, with its times.
     state = (await _send(admin, type="style_studio/people/undo"))["result"]
     assert state["restored"] is True
-    event = (await joyce.receive_json())["event"]
-    assert event["sidebar"] == SIDEBAR
+    result = (await _send(joyce, type="style_studio/person/get"))["result"]
+    assert result["sidebar"] == SIDEBAR
+
+
+async def test_no_live_subscription(hass, hass_ws_client) -> None:
+    """The old live command is gone: a page must not be pushed settings."""
+    await _setup(hass)
+    client = await hass_ws_client(hass)
+    msg = await _send(client, type="style_studio/person/subscribe")
+    assert msg["error"]["code"] == "unknown_command"
 
 
 async def test_people_rules(

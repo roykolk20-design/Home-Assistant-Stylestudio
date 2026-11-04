@@ -8,6 +8,7 @@ background is stored in the dashboard itself (see the panel).
 
 from pathlib import Path
 import re
+import secrets
 from typing import Any
 from urllib.parse import quote
 
@@ -65,13 +66,15 @@ def clean_name(raw: str) -> str | None:
 
 
 def _save(target: Path, name: str, data: bytes) -> str:
-    """Runs in the executor. Never overwrites: a taken name gets a number."""
+    """Runs in the executor. The name gets a random part, so a photo's address
+    can't be guessed (it is served without a login, like /local), and two
+    uploads never collide."""
     target.mkdir(parents=True, exist_ok=True)
     stem, _, extension = name.rpartition(".")
-    candidate, number = name, 1
-    while (target / candidate).exists():
-        number += 1
-        candidate = f"{stem}-{number}.{extension}"
+    while True:
+        candidate = f"{stem}-{secrets.token_hex(5)}.{extension}"
+        if not (target / candidate).exists():
+            break
     (target / candidate).write_bytes(data)
     return candidate
 

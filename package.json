@@ -5,7 +5,7 @@
   "scripts": {
     "build": "esbuild frontend/src/studio-panel.js --bundle --format=esm --minify --target=es2021 --outfile=custom_components/style_studio/www/studio-panel.js",
     "watch": "npm run build -- --watch",
-    "check": "node dev/check-version.mjs",
+    "check": "node dev/check-version.mjs && node dev/check-strings.mjs",
     "smoke": "node dev/smoke.mjs"
   },
   "devDependencies": {

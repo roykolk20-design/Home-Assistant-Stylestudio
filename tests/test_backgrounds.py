@@ -1,4 +1,5 @@
 from pathlib import Path
+import re
 
 from homeassistant.setup import async_setup_component
 from pytest_homeassistant_custom_component.common import MockConfigEntry
@@ -48,29 +49,28 @@ async def test_upload_list_serve_delete(hass, hass_client, hass_ws_client, tmp_p
     resp = await client.post("/api/style_studio/upload?name=Strand.png", data=PNG)
     assert resp.status == 200
     body = await resp.json()
-    assert body == {"name": "Strand.png", "url": "/style_studio_backgrounds/Strand.png"}
-    assert (tmp_path / "style_studio" / "backgrounds" / "Strand.png").read_bytes() == PNG
+    # The name gets a random part: the address can't be guessed, and it is
+    # served without a login (like /local).
+    assert re.fullmatch(r"Strand-[0-9a-f]{10}\.png", body["name"])
+    assert body["url"] == f"/style_studio_backgrounds/{body['name']}"
+    assert (tmp_path / "style_studio" / "backgrounds" / body["name"]).read_bytes() == PNG
 
-    # The same name again doesn't overwrite.
-    resp = await client.post("/api/style_studio/upload?name=Strand.png", data=PNG)
-    assert (await resp.json())["name"] == "Strand-2.png"
+    # The same name again is another file.
+    again = await (await client.post("/api/style_studio/upload?name=Strand.png", data=PNG)).json()
+    assert again["name"] != body["name"]
 
-    # Served without a login, like /local, so a dashboard background loads.
     served = await client.get(body["url"])
     assert served.status == 200
     assert await served.read() == PNG
 
     ws = await hass_ws_client(hass)
     photos = (await _send(ws, type="style_studio/backgrounds/list"))["result"]["photos"]
-    assert [(p["source"], p["name"]) for p in photos] == [
-        ("upload", "Strand-2.png"),
-        ("upload", "Strand.png"),
-        ("www", "eigen.png"),
-    ] or [p["name"] for p in photos][-1] == "eigen.png"
+    assert {p["name"] for p in photos[:2]} == {body["name"], again["name"]}
+    assert [p["source"] for p in photos] == ["upload", "upload", "www"]
     assert photos[-1]["url"] == "/local/eigen.png"
 
-    assert (await _send(ws, type="style_studio/backgrounds/delete", name="Strand.png"))["success"]
-    assert not (tmp_path / "style_studio" / "backgrounds" / "Strand.png").exists()
+    assert (await _send(ws, type="style_studio/backgrounds/delete", name=body["name"]))["success"]
+    assert not (tmp_path / "style_studio" / "backgrounds" / body["name"]).exists()
     # Pictures in /config/www and anything outside the folder are never removed.
     msg = await _send(ws, type="style_studio/backgrounds/delete", name="../www/eigen.png")
     assert msg["error"]["code"] == "invalid_format"

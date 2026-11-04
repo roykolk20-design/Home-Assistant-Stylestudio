@@ -7,12 +7,11 @@ import voluptuous as vol
 
 from homeassistant.components import websocket_api
 from homeassistant.core import HomeAssistant, callback
-from homeassistant.helpers.dispatcher import async_dispatcher_send
 from homeassistant.loader import IntegrationNotFound, async_get_integration
 
 from .const import DOMAIN, VERSION
 from .glass import GLASS_DOMAIN, glass_entry
-from .people import PEOPLE, SIGNAL_PERSONS
+from .people import PEOPLE
 from .store import StyleStore
 from .themes import (
     ForeignFileError,
@@ -173,5 +172,4 @@ async def ws_history_restore(
     else:
         await store.async_push_history(PEOPLE, store.persons)
         await store.async_set_persons(value)
-        async_dispatcher_send(hass, SIGNAL_PERSONS)
     connection.send_result(msg["id"], {"restored": True})

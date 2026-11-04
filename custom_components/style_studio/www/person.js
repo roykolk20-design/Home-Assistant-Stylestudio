@@ -1,15 +1,20 @@
-// Style Studio, per person: applies the theme and sidebar the admin picked for
-// the user who is logged in, and reports what this device uses.
+// Style Studio, per person: when a page opens, applies the theme and sidebar
+// order the admin picked for the user who is logged in, and reports what this
+// device uses. It asks once and never listens live, so nothing changes on a
+// screen someone is using; a change is applied the next time a page opens.
 // The sidebar's look is Glass Sidebar's job; this only sets HA's own order.
 (() => {
   // Keep in sync with const.py and manifest.json.
-  const VERSION = "0.8.0";
+  const VERSION = "0.9.0";
 
   if (window.__styleStudio) return;
   window.__styleStudio = { version: VERSION };
 
   const deviceKey = "style-studio-device";
+  const reportKey = "style-studio-report";
   const appliedKey = (userId, what) => `style-studio-applied-${what}-${userId}`;
+  // The same report isn't sent again within this time.
+  const REPORT_EVERY = 6 * 3600 * 1000;
 
   const storage = {
     get(key) {
@@ -39,36 +44,45 @@
 
   const root = () => document.querySelector("home-assistant");
 
-  async function report() {
-    const hass = root()?.hass;
-    if (!hass) return;
+  // Tell the server what this device uses; skipped when nothing changed.
+  async function report(hass) {
     let sidebar = null;
     try {
       sidebar = (await hass.callWS({ type: "frontend/get_user_data", key: "sidebar" }))?.value ?? null;
     } catch (err) {
       // Older versions have no server-side sidebar data.
     }
-    hass
-      .callWS({
-        type: "style_studio/person/report",
-        device: deviceId(),
-        version: VERSION,
-        // The Companion app adds "Home Assistant/" to its user agent.
-        app: /Home ?Assistant\//i.test(navigator.userAgent),
-        theme: hass.selectedTheme?.theme ?? null,
-        sidebar: sidebar
-          ? { panelOrder: sidebar.panelOrder ?? [], hiddenPanels: sidebar.hiddenPanels ?? [] }
-          : null,
-      })
-      .catch(() => {});
+    const body = {
+      type: "style_studio/person/report",
+      device: deviceId(),
+      version: VERSION,
+      // The Companion app adds "Home Assistant/" to its user agent.
+      app: /Home ?Assistant\//i.test(navigator.userAgent),
+      theme: hass.selectedTheme?.theme ?? null,
+      sidebar: sidebar
+        ? { panelOrder: sidebar.panelOrder ?? [], hiddenPanels: sidebar.hiddenPanels ?? [] }
+        : null,
+    };
+    const state = JSON.stringify({ ...body, device: undefined });
+    try {
+      const last = JSON.parse(storage.get(reportKey));
+      if (last?.state === state && Date.now() - last.at < REPORT_EVERY) return;
+    } catch (err) {
+      // No earlier report.
+    }
+    try {
+      await hass.callWS(body);
+      storage.set(reportKey, JSON.stringify({ state, at: Date.now() }));
+    } catch (err) {
+      // The next page load tries again.
+    }
   }
 
   // Each setting is applied once per device after it changes, so the person
   // can still choose something else in their profile.
-  async function apply(config) {
+  async function apply(hass, config) {
     window.__styleStudio.serverVersion = config.version;
-    const hass = root()?.hass;
-    const userId = hass?.user?.id;
+    const userId = hass.user?.id;
     if (!userId) return;
 
     if (config.theme && config.theme_updated) {
@@ -90,20 +104,21 @@
         }
       }
     }
-
-    // Let HA settle first, so the report shows the result.
-    setTimeout(report, 1500);
   }
 
-  function start() {
+  async function start() {
     const hass = root()?.hass;
     if (!hass?.connection || !hass.user) {
       setTimeout(start, 500);
       return;
     }
-    hass.connection
-      .subscribeMessage(apply, { type: "style_studio/person/subscribe" })
-      .catch((err) => console.warn("Style Studio: could not load personal settings", err));
+    try {
+      await apply(hass, await hass.callWS({ type: "style_studio/person/get" }));
+    } catch (err) {
+      console.warn("Style Studio: could not load personal settings", err);
+    }
+    // Let Home Assistant settle first, so the report shows the result.
+    setTimeout(() => report(hass), 1500);
   }
 
   start();

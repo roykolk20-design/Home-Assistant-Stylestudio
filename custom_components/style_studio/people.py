@@ -1,12 +1,13 @@
 """Per person: a theme and a sidebar order the admin picks for each user.
 
 A beheerder can't change another user's profile from the server, so every
-browser runs www/person.js. It subscribes to its own user's settings and
-applies them the way Home Assistant does itself: the theme with the
-frontend's "settheme" event, the sidebar with frontend/set_user_data. Each
-setting is applied once per device after it changes, so people can still
-pick something else in their profile afterwards. The script also reports
-back which theme, sidebar and version each device uses.
+browser runs www/person.js. When a page opens it asks once for its own user's
+settings and applies them the way Home Assistant does itself: the theme with
+the frontend's "settheme" event, the sidebar with frontend/set_user_data. It
+never listens live, so nothing changes on a screen someone is using. Each
+setting is applied once per device after it changes, so people can still pick
+something else in their profile afterwards. The script also reports back which
+theme, sidebar and version each device uses, at most every few hours.
 """
 
 from datetime import datetime, timezone
@@ -16,13 +17,11 @@ import voluptuous as vol
 
 from homeassistant.components import websocket_api
 from homeassistant.core import HomeAssistant, callback
-from homeassistant.helpers.dispatcher import async_dispatcher_connect, async_dispatcher_send
 
 from .const import DOMAIN, VERSION
 from .store import StyleStore
 from .themes import loaded_themes
 
-SIGNAL_PERSONS = f"{DOMAIN}_persons"
 PEOPLE = "people"
 REPORT_LIMIT = 50
 
@@ -55,7 +54,7 @@ def async_register(hass: HomeAssistant) -> None:
         ws_people_get,
         ws_people_save,
         ws_people_undo,
-        ws_person_subscribe,
+        ws_person_get,
         ws_person_report,
     ):
         websocket_api.async_register_command(hass, command)
@@ -138,7 +137,6 @@ async def ws_people_save(
     if persons != previous:
         await store.async_push_history(PEOPLE, previous)
         await store.async_set_persons(persons)
-        async_dispatcher_send(hass, SIGNAL_PERSONS)
     connection.send_result(msg["id"], await people_state(hass))
 
 
@@ -153,31 +151,19 @@ async def ws_people_undo(
     previous = await store.async_pop_history(PEOPLE)
     if previous is not None:
         await store.async_set_persons(previous)
-        async_dispatcher_send(hass, SIGNAL_PERSONS)
     connection.send_result(msg["id"], {"restored": previous is not None, **await people_state(hass)})
 
 
-@websocket_api.websocket_command({vol.Required("type"): f"{DOMAIN}/person/subscribe"})
+@websocket_api.websocket_command({vol.Required("type"): f"{DOMAIN}/person/get"})
 @callback
-def ws_person_subscribe(
+def ws_person_get(
     hass: HomeAssistant, connection: websocket_api.ActiveConnection, msg: dict
 ) -> None:
-    """For any user: the theme and sidebar picked for them, live."""
+    """For any user: the theme and sidebar picked for them, once."""
+    store = hass.data.get(DOMAIN, {}).get("store")
     user_id = connection.user.id if connection.user else None
-    last: list[dict[str, Any]] = []
-
-    @callback
-    def forward() -> None:
-        store = hass.data.get(DOMAIN, {}).get("store")
-        person = (store.persons.get(user_id) if store and user_id else None) or {}
-        config = {"version": VERSION, **person}
-        if not last or last[0] != config:
-            last[:] = [config]
-            connection.send_message(websocket_api.event_message(msg["id"], config))
-
-    connection.subscriptions[msg["id"]] = async_dispatcher_connect(hass, SIGNAL_PERSONS, forward)
-    connection.send_result(msg["id"])
-    forward()
+    person = (store.persons.get(user_id) if store and user_id else None) or {}
+    connection.send_result(msg["id"], {"version": VERSION, **person})
 
 
 @websocket_api.websocket_command(

@@ -955,6 +955,8 @@ const en = {
     "This screen runs an old version of the panel ({old}, server {new}). Reload the page. In the Companion app: Settings › Companion app › Troubleshooting › Reset frontend cache.",
 };
 
+export { en, nl };
+
 export function translator(hass) {
   const strings = (hass?.locale?.language || hass?.language || "nl").startsWith("nl")
     ? nl

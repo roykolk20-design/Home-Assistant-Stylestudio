@@ -3866,7 +3866,7 @@ var Is=Object.defineProperty;var Vs=(i,e,t)=>e in i?Is(i,e,{enumerable:!0,config
           width: auto;
         }
       }
-    `]);customElements.get("ss-themes-tab")||customElements.define("ss-themes-tab",Te);var St="0.8.0";var Da=["themes","sidebar","rooms","climate","people","check"],je=class extends w{constructor(){super(),this._tab="themes",this._leaving=null}get t(){return Fe(this.hass)}willUpdate(e){e.has("hass")&&this.hass&&!this._loading&&(this._loading=this._load())}async _load(){try{this._data=await this.hass.callWS({type:"style_studio/get"})}catch(e){this._error=e.message??String(e)}}_pickTab(e){if(e===this._tab)return;this.renderRoot.querySelector(".tab-content > *")?.dirty?this._leaving=e:this._tab=e}render(){return n`
+    `]);customElements.get("ss-themes-tab")||customElements.define("ss-themes-tab",Te);var St="0.9.0";var Da=["themes","sidebar","rooms","climate","people","check"],je=class extends w{constructor(){super(),this._tab="themes",this._leaving=null}get t(){return Fe(this.hass)}willUpdate(e){e.has("hass")&&this.hass&&!this._loading&&(this._loading=this._load())}async _load(){try{this._data=await this.hass.callWS({type:"style_studio/get"})}catch(e){this._error=e.message??String(e)}}_pickTab(e){if(e===this._tab)return;this.renderRoot.querySelector(".tab-content > *")?.dirty?this._leaving=e:this._tab=e}render(){return n`
       <div class="toolbar">
         ${this.narrow?n`<button class="icon" @click=${this._toggleMenu} aria-label="Menu">
               <ha-icon icon="mdi:menu"></ha-icon>

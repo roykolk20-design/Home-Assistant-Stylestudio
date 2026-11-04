@@ -29,8 +29,8 @@ jobs:
         with:
           node-version: 22
       - run: npm ci
-      - name: Versions match
-        run: node dev/check-version.mjs
+      - name: Versions match, and every text exists in Dutch and English
+        run: npm run check
       - name: Built panel is up to date
         run: |
           npm run build

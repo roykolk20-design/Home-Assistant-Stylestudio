@@ -13,10 +13,10 @@
     "http",
     "websocket_api"
   ],
-  "documentation": "https://github.com/roykolk20-design/style-studio",
+  "documentation": "https://github.com/roykolk20-design/Home-Assistant-Stylestudio",
   "integration_type": "service",
   "iot_class": "calculated",
-  "issue_tracker": "https://github.com/roykolk20-design/style-studio/issues",
+  "issue_tracker": "https://github.com/roykolk20-design/Home-Assistant-Stylestudio/issues",
   "single_config_entry": true,
-  "version": "0.8.0"
+  "version": "0.9.0"
 }
