@@ -397,6 +397,12 @@ as the argument to keep pictures of what the browser saw.
 To release: raise the version in the four places `npm run check` names, update
 `CHANGELOG.md`, build, and push a tag `vX.Y.Z`.
 
+## Support
+
+Style Studio is free and open source. If it makes your Home Assistant nicer to use, you can buy me a coffee.
+
+[![Support me on Ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/kolkiesdesign)
+
 ## License
 
 MIT
