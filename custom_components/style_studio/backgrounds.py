@@ -66,13 +66,13 @@ def clean_name(raw: str) -> str | None:
 
 
 def _save(target: Path, name: str, data: bytes) -> str:
-    """Runs in the executor. The name gets a random part, so a photo's address
-    can't be guessed (it is served without a login, like /local), and two
-    uploads never collide."""
+    """Runs in the executor. The name gets a random part (128 bits), so a
+    photo's address can't be guessed (it is served without a login, like
+    /local), and two uploads never collide."""
     target.mkdir(parents=True, exist_ok=True)
     stem, _, extension = name.rpartition(".")
     while True:
-        candidate = f"{stem}-{secrets.token_hex(5)}.{extension}"
+        candidate = f"{stem}-{secrets.token_urlsafe(16)}.{extension}"
         if not (target / candidate).exists():
             break
     (target / candidate).write_bytes(data)

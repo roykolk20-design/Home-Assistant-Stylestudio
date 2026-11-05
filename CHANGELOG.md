@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.9.1]
+
+### Security
+
+- Uploaded background photos get a 128-bit random part in their file name
+  (was 40 bits), so the address of a photo, which is served without a login,
+  cannot be guessed. Photos uploaded with an older version keep their name.
+
 ## [0.9.0]
 
 ### Changed

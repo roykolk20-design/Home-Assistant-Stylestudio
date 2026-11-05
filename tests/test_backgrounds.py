@@ -51,7 +51,7 @@ async def test_upload_list_serve_delete(hass, hass_client, hass_ws_client, tmp_p
     body = await resp.json()
     # The name gets a random part: the address can't be guessed, and it is
     # served without a login (like /local).
-    assert re.fullmatch(r"Strand-[0-9a-f]{10}\.png", body["name"])
+    assert re.fullmatch(r"Strand-[A-Za-z0-9_-]{22}\.png", body["name"])
     assert body["url"] == f"/style_studio_backgrounds/{body['name']}"
     assert (tmp_path / "style_studio" / "backgrounds" / body["name"]).read_bytes() == PNG
 

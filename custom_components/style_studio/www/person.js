@@ -5,7 +5,7 @@
 // The sidebar's look is Glass Sidebar's job; this only sets HA's own order.
 (() => {
   // Keep in sync with const.py and manifest.json.
-  const VERSION = "0.9.0";
+  const VERSION = "0.9.1";
 
   if (window.__styleStudio) return;
   window.__styleStudio = { version: VERSION };
